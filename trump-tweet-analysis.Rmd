@@ -1,0 +1,38 @@
+---
+title: "Trump Tweet Text Analysis"
+author: "Pascal Niggemeier"
+output: 
+  html_notebook: 
+    fig_caption: yes
+    fig_height: 7
+    fig_width: 10
+    number_sections: yes
+    toc: yes
+---
+---
+
+# Configuration {-}
+
+```{r results=FALSE}
+require(tidyverse)
+```
+
+# Einleitung: Text-Mining am Beispiel der Twitter Posts von Donald Trump
+
+# Grundlagen: Einführung in die Sentimentanalyse
+
+Im Folgenden soll ein Einstieg in die Sentimentanalyse geboten werden. Die Inhalte bieten die Grundlage für das eigentliche Projekt *Eine Analyse der Tweets von Donals Trump* alias [@realDonaldTrump](https://twitter.com/realdonaldtrump)
+
+## Preprocessing & Exploration
+
+## Sentiment-Lexika
+
+## Vorgehen und Methoden der Implementierung der Sentimentanalyse
+
+### *tidy data*-Prinzipien
+
+### *Inner Join* mit Lexika
+
+That‘s it! Nach den Methoden der „Tidy Data“- Prinzipien wird durch einen relativ einfachen „Join“ die Sentimentanalyse implementiert.
+
+Theoretisch könnte man hier stoppen. Das eigentlich interessante ist nun, wie man aus den Verknüpfungen zw. Token und Sentimenten Wissen generieren kann.
