@@ -12,21 +12,19 @@ output:
 ---
 ---
 
-Für die Dokumentation des Projekts wähle ich eine R-Markdown Datei. Sie vereinfacht das Reproduzieren des Projektes für den Leser. Für die Präsentation der Ergebnisse liegt eine separate PowerPoint-Präsentation vor.
+Für die Dokumentation des Projekts wird eine R-Markdown Datei gewählt, weil sie das Reproduzieren des Projektes und der Ergebnisse für den Leser vereinfacht. Für die Präsentation der Ergebnisse liegt eine separate PowerPoint-Präsentation vor.
 
-Folgender Code-Chunk lädt die benötigten Packages und die Textdaten von Twitter.
-
-```{r results=FALSE}
-if (!require('tidyverse')) install.packages('tidyverse'); library('tidyverse')
-
-if (!require('topicmodels')) install.packages('topicmodels'); library('topicmodels')
-```
+Der nachfolgende Code-Chunk lädt die benötigten Packages und die Textdaten von Twitter.
 
 # Einleitung: Text-Mining am Beispiel der Twitter Posts von Donald Trump
 
 Fragestellung / Problemstellung
 
 Zielsetzung etc.
+
+zweiter schwerpunkt: [Topic modeling - Themenanalyse]
+
+Die Ausarbeitung legt ihren Schwerpunkt auf die Analyse der Themen mit denen sich der Twitter account *@realDonaldTrump* befasst, also [Topic modeling - Themenanalyse]. Daher wird dieses Kapitel etwas ausführlicher ausgelegt. Somit soll die intensive Auseinandersetzung mit der verwendeten Methode sichergestellt werden.
 
 # Grundlagen: Einführung in die Sentimentanalyse
 
@@ -71,13 +69,15 @@ That‘s it! Nach den Methoden der „Tidy Data“- Prinzipien wird durch einen 
 
 Theoretisch könnte man hier stoppen. Das eigentlich interessante ist nun, wie man aus den Verknüpfungen zw. Token und Sentimenten Wissen generieren kann.
 
-## Topic modeling - Themenanalyse
+# Topic modeling - Themenanalyse
+
+In dieser Ausarbeitung wird der zweite Schwerpunkt auf die Analyse der Themen gelegt, mit denen sich der Twitter account *@realDonaldTrump* befasst. Daher wird dieses Kapitel etwas ausführlicher ausgelegt. Somit soll die intensive Auseinandersetzung mit der verwendeten Methode sichergestellt werden.
 
 Bisher wurde gezeigt, dass Wortzahlen und Visualisierungen etwas über Inhalte aussagen. Sentiment-Lexika wurden zum Feststellen der emotionalen Wertigkeit eines Dokuments verwendet. Nun soll über die Wortzahlen hinaus die zugrundeliegenden Themen in einer Sammlung von Dokumenten aufgedeckt werden. Dazu wird ein Wahrscheinlichkeitsmodell für *Dokumente* verwendet. **Latent Dirichlet allocation** (LDA) wurde von David Blei, Andrew Ng und Michael I. Jordan vorgestellt. Es darf nicht mit *Linear discriminant analysis*, ebenfalls abgekürzt mit LDA, verwechselt werden. In diesem Dokument bezieht sich LDA auf *Latent Dirichlet allocation*.
 
 LDA ist ein Standard-Themen-Modell, durch das *topic modeling* implementiert werden kann. Es sucht nach Mustern von Wörtern, die innerhalb und über eine Sammlung von Dokumenten hinweg auftreten, auch bekannt als Korpus (Gesamtheit zusammengehöriger Textdaten). Dabei werden $k$ Themen innerhalb eines Korpus gefunden, indem für jedes Dokument eine separate Sammlung von Wörtern erstellt und Wörter ausgegeben werden, um nach Mustern zu suchen, in denen Wörter zusammengehörig vorkommen. Die Reihenfolge der Wörter ist dabei unerheblich.
 
-Die ausgegebenen Themen sind eine Liste aller Wörter im Korpus, denen eine Auftrittswahrscheinlichkeit innerhalb der Themen zugeordnet wird. Worte, die häufig zusammen auftreten, bekommen höhere $p$-Values innerhalb eines oder mehrer Themen zugeordnet.
+Die ausgegebenen Themen sind eine Liste aller Wörter im Korpus, denen eine Auftrittswahrscheinlichkeit innerhalb der Themen zugeordnet wird. Worte, die häufig zusammen auftreten, bekommen höhere $p$-Values (genauer $\beta$-Werte) innerhalb eines oder mehrer Themen zugeordnet.
 
 Da die Methode nach Mustern und Zusammenhängen sucht, statt sie vorherzusagen, kann sie den *Unsupervised Learning*-Algorithmen aus dem Bereich des Maschinellen Lernens zugeordnet werden. *Topic modeling* kann daher mit *Clustering* verwechselt werden. Sie lassen sich trotz ihrer Ähnlichkeit unterscheiden: Gängige Clustering-Techniken wie *k-means* und *hierarchical clustering* basieren auf dem Abstand zwischen Objekten, der ein kontinuierliches Maß ist. Darüber hinaus ist jedes zu gruppierende Objekt einem einzelnen Cluster zugeordnet. Themenmodelle wie LDA basieren auf Worthäufigkeiten, was hingegen ein diskretes Maß ist. Zudem ist jedes Objekt (hier ein Dokument innerhalb eines Korpus) ein Teilmitglied jedes Themas.
 
@@ -85,13 +85,61 @@ Die nachfolgende Grafik erweitert den Text-Mining-Prozess von zuvor um *Topic Mo
 
 ![](images/text-mining-prozess3-topic-modeling.png)
 
-Das Trainieren des Modells kann mittels der `LDA()`-Funktion implementiert werden. An sie muss eine *Document Term Matrix* (DTM) übergeben werden. Sie gibt `LDA`-Objekt zurück, welches die Information über die Auftrittswahrscheinlichkeiten enthält. Sie werden in $\beta$-Werte übersetzt, welche letztlich interpretiert werden können.
+Das Trainieren des Modells kann mittels der `LDA()`-Funktion implementiert werden. Um es auszuführen muss zunächst eine *Document Term Matrix* (DTM) erstellt und an `LDA()` übergeben werden. Ein `matrix`-Object ist ähnlich aufgebaut zu einem `DataFrame`-Objekt. Jedoch werden die Bestandteile statt *Observation* und *Variable* mit *Zeilen* und *Spalten* bezeichnet, wobei jede Spalte aus einem Datentypen bestehen muss. Eine DTM hat eine Zeile für jedes Document (entspricht im Praxisbeispiel später Tweets) und eine Spalte für jedes einzigartige Word oder Begriff über alle Dokumente in einem Corpus hinweg. Die Werte innerhalb der DTM sind die Zählungen oder Zahl der Verwendung jedes Begriffes innerhalb des zugehörigen Dokuments. Das führt dazu, dass i.d.R. der Großteil aller Werte $0$ enspricht. In einem solchen Fall spricht man von einer *dünnbesetzten Matrix*. Eine DTM kann mithilfe der Funktion `cast_dtm()` erstellt werden. Als Eingabewert erhält sie das *tidy* DataFrame aus den vorherigen Schritten des Preprocessings, das die Wortzählungen enthält. 
+
+Das Trainieren des Modells kann mittels der `LDA()`-Funktion implementiert werden. Sie gibt `LDA`-Objekt zurück, welches die Information über die Auftrittswahrscheinlichkeiten enthält. Sie werden in $\beta$-Werte übersetzt, welche letztlich interpretiert werden können. 
+
+```{r eval=FALSE}
+library(topicmodels)
+
+lda_fitted <- LDA(
+  dtm_input,
+  k = 2,
+  method = "Gibbs",
+  control = list(seed = 42)
+)
+```
+Der code-Chunk zeigt die Verwendung von `LDA()`. Das erste Argument ist die DTM. Das zweite Argument `k` gibt an, wie viele Themen bestimmt werden sollen. `method` gibt die zu verwendene Schätzmethode an. Der *Default* Wert hier wäre eine schnelle Annäherung. Wenn jedoch vollständigere Methode aber dafür mit längerer Laufzeit bevorzugt wird, sollte der *Gibbs*-Sampler verwendet werden. Es kann zudem ein optionaler Seed gesetzt werden, um Repruduzierbarkeit zu unterstützen. Die Laufzeit der Methode kann bis zu einige Stunden betragen.
+
+Das trainierte Modell ist ein spezielles R-Objekt, das für das Package `topicmodels` kodiert ist, wie es auch bei dem DTM der Fall ist. Funktionen wie `str()`, `summary()` oder `glimpse()` können den Inhalt des Modells anzeigen.
+
+```{r eval=FALSE}
+glimpse(lda_fitted)
+```
+
+Die Evaluierung des Modell-Objekts kann mithilfe eines der Werkzeuge aus dem `tidytext` Package erledigt werden. Insbesondere sind die wichtigsten Ergebnisse eines Themenmodells die Themen selbst: das Wörterbuch aller Wörter im Korpus, sortiert nach der Wahrscheinlichkeit, mit der jedes Wort im Rahmen dieses Themas auftritt. In diesem Fall kann die `tidy()`-Funktion die Matrix mit Auftrittswahrscheinlichkeiten der Themen in eine Form umwandeln, die auf einfache Weise mit `ggplot2` zur Visualisierung verwendet werden kann.
+
+```{r eval=FALSE}
+lda_fitted %>%
+  tidy(matrix = "beta")
+```
+
 
 Die Implementation und das Ergebnis einer *Latent Dirichlet Allocation* wird im Praxisteil deutlich.
 
 Referenz: https://www.tidytextmining.com/topicmodeling.html
 
-# Tweet Analyse des Twitter Accounts *@realDonaldTrump*
+# Dokumentation der Durchführung der Analyse
+
+Der nachfolgende Code-Chunk lädt die benötigten Packages und die Textdaten von Twitter.
+
+```{r results=FALSE}
+if(!require('tidyverse')){
+  install.packages('tidyverse')}; library('tidyverse')
+
+
+if(!require('tidytext')){
+  install.packages('tidytext')}; library('tidytext')
+
+
+if(!require('topicmodels')){
+  install.packages('topicmodels')}; library('topicmodels')
+
+if(!require('jsonlite')){
+  install.packages('jsonlite')}; library('jsonlite')
+
+tweets <- fromJSON('src/tweets-2019-06-22.json')
+```
 
 ## Beschreibung der Daten
 
