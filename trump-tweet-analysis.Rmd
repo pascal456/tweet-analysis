@@ -8,24 +8,58 @@ output:
     fig_width: 10
     number_sections: yes
     toc: yes
+    toc_float: true
 ---
 ---
 
-# Configuration {-}
+Für die Dokumentation des Projekts wähle ich eine R-Markdown Datei. Sie vereinfacht das Reproduzieren des Projektes für den Leser. Für die Präsentation der Ergebnisse liegt eine separate PowerPoint-Präsentation vor.
+
+Folgender Code-Chunk lädt die benötigten Packages und die Textdaten von Twitter.
 
 ```{r results=FALSE}
-require(tidyverse)
+if (!require('tidyverse')) install.packages('tidyverse'); library('tidyverse')
+
+if (!require('topicmodels')) install.packages('topicmodels'); library('topicmodels')
 ```
 
 # Einleitung: Text-Mining am Beispiel der Twitter Posts von Donald Trump
 
+Fragestellung / Problemstellung
+
+Zielsetzung etc.
+
 # Grundlagen: Einführung in die Sentimentanalyse
 
-Im Folgenden soll ein Einstieg in die Sentimentanalyse geboten werden. Die Inhalte bieten die Grundlage für das eigentliche Projekt *Eine Analyse der Tweets von Donals Trump* alias [@realDonaldTrump](https://twitter.com/realdonaldtrump)
+Im Folgenden soll ein Einstieg in die Sentimentanalyse geboten werden. Die Inhalte bieten die Grundlage für das eigentliche Projekt *"Eine Analyse der Tweets von Donals Trump"*, alias [&#64;realDonaldTrump](https://twitter.com/realdonaldtrump).
+
+Eine Sentimentanalyse (auch Stimmungsanalyse) ist eine spezielle Ausprägung des Text-Minings. Beim Text-Mining werden Daten in Form von Text mit verschiedenen quantitativen und qualitativen Methoden analysiert. Handelt es sich bei den Textdaten um natürliche Sprache, also durch Menschen formulierte und ausgedrückte Texte, spricht man von *Natural Language Processing* (NLP). Weiternoch geht es beim NLP um die Verarbeitung dieser Textdaten und vor allem um deren Interpretation. Die Interpretation kann bspw. durch die Aufnahme von Stimmen (gesprochene Sprache) und anschließende Übersetzung in textuelle Bausteine erfolgen. Interpretation kann außerdem eine Übersetzung von Stimm- oder Textdaten in eine gewisse Semantik dieser Daten bedeuten.
+
+Sentimentanalyse ist das Feststellen der Stimmung bzw. der Polarität eines Textes und wird auch *Opinion Mining* genannt.
+
+> Die Stimmungsanalyse ist eines der Felder der Natural Language Processing, das sich der Erforschung subjektiver Meinungen oder Gefühle widmet, die aus verschiedenen Quellen zu einem bestimmten Thema gesammelt wurden.  
+--- Volodymyr Bilyk
+
+Dem Begriff *Sentiment* sind laut Duden die Bedeutungen *Empfindung* sowie *Gefühl* zuzuordnen und ist synonym verwendbar zu *Gemüt*, *Regung* oder *Sinn*. Letztlich ist die Implementierung von Sentimentanalysen verglichen mit anderen fortgeschrittenen statistischen Methoden einfach zu erledigen, wenn man sich lediglich auf die Zuordnung der sog. Sentimente zu den Textabschnitten bezieht. Dies wird lediglich durch bestimmte Arten von *Joins* durchgeführt (s. [Vorgehen und Methoden der Implementierung der Sentimentanalyse]). Sie wird erst durch die Interpretation, die statistische Auswertung und das adäquate Zusammenführen der Daten aus verschiedenen Quellen komplizierter. Komplexität erlangt die Thematik durch Folgendes:
+
+* die Fragestellungen
+* der Konzeption der Durchführung
+* Auswahl der richtigen Methoden u. VOrgehensweisen
+* Reduktion des Problems bzw. der komplexität auf das Wesentliche
+* die Interpretaton der Ergebnisse
+* Transfer der Ergebnisse aus den Methoden der Sentimentanalyse in weiterführende Methoden
+
+
+Referenz: https://theappsolutions.com/blog/development/sentiment-analysis/
 
 ## Preprocessing & Exploration
 
+### Tidying
+
+Das *'Säubern'* der Textdaten
+
 ## Sentiment-Lexika
+
+![](images/text-mining-prozess2.png)
 
 ## Vorgehen und Methoden der Implementierung der Sentimentanalyse
 
@@ -36,3 +70,39 @@ Im Folgenden soll ein Einstieg in die Sentimentanalyse geboten werden. Die Inhal
 That‘s it! Nach den Methoden der „Tidy Data“- Prinzipien wird durch einen relativ einfachen „Join“ die Sentimentanalyse implementiert.
 
 Theoretisch könnte man hier stoppen. Das eigentlich interessante ist nun, wie man aus den Verknüpfungen zw. Token und Sentimenten Wissen generieren kann.
+
+## Topic modeling - Themenanalyse
+
+Bisher wurde gezeigt, dass Wortzahlen und Visualisierungen etwas über Inhalte aussagen. Sentiment-Lexika wurden zum Feststellen der emotionalen Wertigkeit eines Dokuments verwendet. Nun soll über die Wortzahlen hinaus die zugrundeliegenden Themen in einer Sammlung von Dokumenten aufgedeckt werden. Dazu wird ein Wahrscheinlichkeitsmodell für *Dokumente* verwendet. **Latent Dirichlet allocation** (LDA) wurde von David Blei, Andrew Ng und Michael I. Jordan vorgestellt. Es darf nicht mit *Linear discriminant analysis*, ebenfalls abgekürzt mit LDA, verwechselt werden. In diesem Dokument bezieht sich LDA auf *Latent Dirichlet allocation*.
+
+LDA ist ein Standard-Themen-Modell, durch das *topic modeling* implementiert werden kann. Es sucht nach Mustern von Wörtern, die innerhalb und über eine Sammlung von Dokumenten hinweg auftreten, auch bekannt als Korpus (Gesamtheit zusammengehöriger Textdaten). Dabei werden $k$ Themen innerhalb eines Korpus gefunden, indem für jedes Dokument eine separate Sammlung von Wörtern erstellt und Wörter ausgegeben werden, um nach Mustern zu suchen, in denen Wörter zusammengehörig vorkommen. Die Reihenfolge der Wörter ist dabei unerheblich.
+
+Die ausgegebenen Themen sind eine Liste aller Wörter im Korpus, denen eine Auftrittswahrscheinlichkeit innerhalb der Themen zugeordnet wird. Worte, die häufig zusammen auftreten, bekommen höhere $p$-Values innerhalb eines oder mehrer Themen zugeordnet.
+
+Da die Methode nach Mustern und Zusammenhängen sucht, statt sie vorherzusagen, kann sie den *Unsupervised Learning*-Algorithmen aus dem Bereich des Maschinellen Lernens zugeordnet werden. *Topic modeling* kann daher mit *Clustering* verwechselt werden. Sie lassen sich trotz ihrer Ähnlichkeit unterscheiden: Gängige Clustering-Techniken wie *k-means* und *hierarchical clustering* basieren auf dem Abstand zwischen Objekten, der ein kontinuierliches Maß ist. Darüber hinaus ist jedes zu gruppierende Objekt einem einzelnen Cluster zugeordnet. Themenmodelle wie LDA basieren auf Worthäufigkeiten, was hingegen ein diskretes Maß ist. Zudem ist jedes Objekt (hier ein Dokument innerhalb eines Korpus) ein Teilmitglied jedes Themas.
+
+Die nachfolgende Grafik erweitert den Text-Mining-Prozess von zuvor um *Topic Modeling*
+
+![](images/text-mining-prozess3-topic-modeling.png)
+
+Das Trainieren des Modells kann mittels der `LDA()`-Funktion implementiert werden. An sie muss eine *Document Term Matrix* (DTM) übergeben werden. Sie gibt `LDA`-Objekt zurück, welches die Information über die Auftrittswahrscheinlichkeiten enthält. Sie werden in $\beta$-Werte übersetzt, welche letztlich interpretiert werden können.
+
+Die Implementation und das Ergebnis einer *Latent Dirichlet Allocation* wird im Praxisteil deutlich.
+
+Referenz: https://www.tidytextmining.com/topicmodeling.html
+
+# Tweet Analyse des Twitter Accounts *@realDonaldTrump*
+
+## Beschreibung der Daten
+
+Die Textdaten (engl. *dataset*)...
+
+```{r}
+
+```
+
+## poisson test
+
+https://dzone.com/articles/text-analysis-of-trumps-tweets-confirms-he-writes
+
+# Zusammenfassung der Ergebnisse
