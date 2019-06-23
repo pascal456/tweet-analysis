@@ -1,6 +1,7 @@
 ---
 title: "Trump Tweet Text Analysis"
 author: "Pascal Niggemeier"
+date: "24.06.2019"
 output: 
   html_notebook: 
     fig_caption: yes
@@ -8,7 +9,7 @@ output:
     fig_width: 10
     number_sections: yes
     toc: yes
-    toc_float: true
+    toc_float: yes
 ---
 ---
 
@@ -26,9 +27,23 @@ zweiter schwerpunkt: [Topic modeling - Themenanalyse]
 
 Die Ausarbeitung legt ihren Schwerpunkt auf die Analyse der Themen mit denen sich der Twitter account *@realDonaldTrump* befasst, also [Topic modeling - Themenanalyse]. Daher wird dieses Kapitel etwas ausführlicher ausgelegt. Somit soll die intensive Auseinandersetzung mit der verwendeten Methode sichergestellt werden.
 
-# Grundlagen: Einführung in die Sentimentanalyse
+# Grundlagen: Textanalyse und Text-Mining mit R
 
-Im Folgenden soll ein Einstieg in die Sentimentanalyse geboten werden. Die Inhalte bieten die Grundlage für das eigentliche Projekt *"Eine Analyse der Tweets von Donals Trump"*, alias [&#64;realDonaldTrump](https://twitter.com/realdonaldtrump).
+Im Folgenden soll ein Einstieg in die Textanalyse mit R geboten werden. Die Inhalte bieten die Grundlage für das eigentliche Projekt *"Eine Analyse der Tweets von Donals Trump"*, alias [&#64;realDonaldTrump](https://twitter.com/realdonaldtrump).
+
+## Preprocessing & Exploration
+
+*tidy data*-Prinzipien
+
+Das *'Säubern'* der Textdaten
+
+Ausgangspunkt ist der Text-Mining-Prozess aus der Abbildung:
+
+![](images/text-mining-prozess1.png)
+
+Dieser Text-Mining-Prozess wird im Folgenden schrittweise ergänzt.
+
+## Sentimentanalyse
 
 Eine Sentimentanalyse (auch Stimmungsanalyse) ist eine spezielle Ausprägung des Text-Minings. Beim Text-Mining werden Daten in Form von Text mit verschiedenen quantitativen und qualitativen Methoden analysiert. Handelt es sich bei den Textdaten um natürliche Sprache, also durch Menschen formulierte und ausgedrückte Texte, spricht man von *Natural Language Processing* (NLP). Weiternoch geht es beim NLP um die Verarbeitung dieser Textdaten und vor allem um deren Interpretation. Die Interpretation kann bspw. durch die Aufnahme von Stimmen (gesprochene Sprache) und anschließende Übersetzung in textuelle Bausteine erfolgen. Interpretation kann außerdem eine Übersetzung von Stimm- oder Textdaten in eine gewisse Semantik dieser Daten bedeuten.
 
@@ -41,7 +56,7 @@ Dem Begriff *Sentiment* sind laut Duden die Bedeutungen *Empfindung* sowie *Gef�
 
 * die Fragestellungen
 * der Konzeption der Durchführung
-* Auswahl der richtigen Methoden u. VOrgehensweisen
+* Auswahl der richtigen Methoden u. Vorgehensweisen
 * Reduktion des Problems bzw. der komplexität auf das Wesentliche
 * die Interpretaton der Ergebnisse
 * Transfer der Ergebnisse aus den Methoden der Sentimentanalyse in weiterführende Methoden
@@ -49,27 +64,23 @@ Dem Begriff *Sentiment* sind laut Duden die Bedeutungen *Empfindung* sowie *Gef�
 
 Referenz: https://theappsolutions.com/blog/development/sentiment-analysis/
 
-## Preprocessing & Exploration
+## Vorgehen und Methoden der Implementierung der Sentimentanalyse
 
-### Tidying
-
-Das *'Säubern'* der Textdaten
-
-## Sentiment-Lexika
+Wenn sich menschliche Leser einem Text nähern, nutzen sie ihre Erfahrung oder Verständnis, das sie über die emotionale Absicht von Wörtern im Laufe ihres Lebens gelernt haben. Daraus leiten sie ab, ob ein Textabschnitt positiv oder negativ ist oder vielleicht durch ein anderes nuancierteres Gefühl wie Überraschung oder Ekel gekennzeichnet ist. Für die programmatische Verarbeitung von Wörtern, können die Werkzeuge des Text-Minings verwendet werden. Die nachfolgende Abbildung ergänzt den Text-Mining-Prozess um entsprechende Inhalte:
 
 ![](images/text-mining-prozess2.png)
 
-## Vorgehen und Methoden der Implementierung der Sentimentanalyse
+Eine Möglichkeit, das Stimmungsbild eines Textes zu analysieren, besteht darin, den Text als eine Kombination seiner einzelnen Wörter und den Stimmungsbildgehalt des gesamten Textes als die Summe des Stimmungsbildes der einzelnen Wörter zu betrachten. Dies ist nicht die einzg mögliche Methode oder Vorgehen, jedoch ist er weit verbreitet. Zudem ist es ein Ansatz mit dem naturgemäß die Vorteile des *'tidy'*-Ökosystems ausgenutzt werden können und außerdem zahlreiche Leitfäden zum Vorgehen vorliegen. Daher wird dieser Ansatz für diese Ausarbeitung gewählt.
 
-### *tidy data*-Prinzipien
+## Sentiment-Lexika
 
 ### *Inner Join* mit Lexika
 
-That‘s it! Nach den Methoden der „Tidy Data“- Prinzipien wird durch einen relativ einfachen „Join“ die Sentimentanalyse implementiert.
+That‘s it! Nach den Methoden der „Tidy Data“- Prinzipien wird durch einen relativ einfachen „Join“ (`inner_join`) die Sentimentanalyse implementiert. Auf diese Weise werden aus der Originalquelle nur diejenigen Wörter erhalten, die in beiden Quellen, dem Text und dem Sentiment-Lexikon, enthalten sind.
 
-Theoretisch könnte man hier stoppen. Das eigentlich interessante ist nun, wie man aus den Verknüpfungen zw. Token und Sentimenten Wissen generieren kann.
+Theoretisch könnte man an dieser Stelle stoppen. Das Interessante ist nachfolgend, wie man aus den Verknüpfungen zw. Token und Sentimenten Wissen generieren kann.
 
-# Topic modeling - Themenanalyse
+## Topic modeling - Themenanalyse
 
 In dieser Ausarbeitung wird der zweite Schwerpunkt auf die Analyse der Themen gelegt, mit denen sich der Twitter account *@realDonaldTrump* befasst. Daher wird dieses Kapitel etwas ausführlicher ausgelegt. Somit soll die intensive Auseinandersetzung mit der verwendeten Methode sichergestellt werden.
 
@@ -107,19 +118,27 @@ Das trainierte Modell ist ein spezielles R-Objekt, das für das Package `topicmo
 glimpse(lda_fitted)
 ```
 
-Die Evaluierung des Modell-Objekts kann mithilfe eines der Werkzeuge aus dem `tidytext` Package erledigt werden. Insbesondere sind die wichtigsten Ergebnisse eines Themenmodells die Themen selbst: das Wörterbuch aller Wörter im Korpus, sortiert nach der Wahrscheinlichkeit, mit der jedes Wort im Rahmen dieses Themas auftritt. In diesem Fall kann die `tidy()`-Funktion die Matrix mit Auftrittswahrscheinlichkeiten der Themen in eine Form umwandeln, die auf einfache Weise mit `ggplot2` zur Visualisierung verwendet werden kann.
+Die Evaluierung des Modell-Objekts kann mithilfe eines der Werkzeuge aus dem `tidytext` Package erledigt werden. Insbesondere sind die wichtigsten Ergebnisse eines Themenmodells die Themen selbst: das Wörterbuch aller Wörter im Korpus, sortiert nach der Wahrscheinlichkeit, mit der jedes Wort im Rahmen dieses Themas auftritt. In diesem Fall kann die `tidy()`-Funktion die Matrix mit Auftrittswahrscheinlichkeiten der Themen in eine Form umwandeln, die erneut den *Tidy-Data*-Prinzipien folgt und somit auf einfache Weise mit `ggplot2` zur Visualisierung verwendet werden kann. Die Auftrittswahrscheinlichkeiten $\beta$ sollten zudem absteigend sortiert werden:
 
 ```{r eval=FALSE}
 lda_fitted %>%
-  tidy(matrix = "beta")
+  tidy(matrix = "beta") %>%
+  arrange(desc(beta))
 ```
 
+Es resultiert die geordnete Auflistung der Wahrscheinlichkeiten. Es steht nun die Frage aus, wie man entscheiden soll, wie $k$ zu definieren ist. $k$ gibt die Anzahl der Themen an, nach denen `LDA` suchen soll. Die Antwort auf diese Frage steht im direkten Zusammenhang mit der Interpretation des Modells. Ein *Topic Model* zu interpretieren ist ein subjectiver Prozess. Denn wie auch bei anderen *Unsupervised Learning* Methoden, wie bspw. *Clustering*, gibt der Output der Modelle an, woraus die Cluster bestehen. Es fehlt jedoch eine Beschreibung der Richtung, ein Hinweis auf die Bedeutung der Ergebnisse. Die Bedeutung kann nicht trennscharf durch die Methoden bestimmt werden. Hier könnten bspw. Missverständnisse je nach unterschiedlicher Kultur der Betrachter auftreten. Gleichwohl könenn ganz andare, unerwartete Dimensionen als Stöfaktor in die Bewertung eingehen. Die Entscheidung also, wie viele Themen zu bestimmen sind, hängt vom Betrachter ab. Die **Schlüsselerkenntnis** hier sollte sein, dass $k$ so gewählt sind, dass die Ergebnisse ausreichend unterschiedlich zueinander sind, sodass der Betrachter sinnhafte Erkenntnisse extrahieren kann. Die Themen sollten sich nicht wiederholen. 
+
+Grundsätzlich kann man sich an folgendes Muster halten:
+
+* weitere Themen hinzuzunehmen ($k$ erhöhen), ist so lange in Ordnung, wenn sie unterschiedlich zueinander sind
+* wenn Themen sich wiederholen, wird $k$ zu groß
+* Themen sollten durch einen *Überschrift* oder ein *Name* beschrieben werden, um sie greifbarer für die Interpretation zu machen
 
 Die Implementation und das Ergebnis einer *Latent Dirichlet Allocation* wird im Praxisteil deutlich.
 
 Referenz: https://www.tidytextmining.com/topicmodeling.html
 
-# Dokumentation der Durchführung der Analyse
+# Dokumentation der Durchführung der Textanalyse
 
 Der nachfolgende Code-Chunk lädt die benötigten Packages und die Textdaten von Twitter.
 
@@ -131,6 +150,8 @@ if(!require('tidyverse')){
 if(!require('tidytext')){
   install.packages('tidytext')}; library('tidytext')
 
+if(!require('lubridate')){
+  install.packages('lubridate')}; library('lubridate')
 
 if(!require('topicmodels')){
   install.packages('topicmodels')}; library('topicmodels')
@@ -138,7 +159,10 @@ if(!require('topicmodels')){
 if(!require('jsonlite')){
   install.packages('jsonlite')}; library('jsonlite')
 
-tweets <- fromJSON('src/tweets-2019-06-22.json')
+if(!require('scales')){
+  install.packages('scales')}; library('scales')
+
+tweets <- as.tbl( fromJSON('src/tweets-2019-06-22.json') )
 ```
 
 ## Beschreibung der Daten
@@ -146,10 +170,197 @@ tweets <- fromJSON('src/tweets-2019-06-22.json')
 Die Textdaten (engl. *dataset*)...
 
 ```{r}
-
+glimpse(tweets)
 ```
 
-## poisson test
+## Preprocessing & Tidying
+
+Beim ersten Inspizieren der geladenen Daten fällt zunächst auf, dass die Angabe über das Tweet-Erstellungsdatum (`created_at`) als `character` formatiert ist: 
+
+```{r}
+class(tweets$created_at)
+```
+
+Diese Variable wird als Datumsangabe benötigt. Mit der Funktion `as.POSIXct` lassen sich Datumsangaben nach dem POSIX-Standard erzeugen, welche sich gut mit R verarbeiten lassen. Die Zeitangaben aus der Quelle lassen sich mittels `strptime` von `character` Repräsentationen in POSIX\*-Objekte konvertieren. Zusätzlich muss für die Tweet Analyse bedacht werden, dass es sich bei den Zeitangaben i.d.R. nicht um die Zeitzone handelt, die wir in Mitteleuropa normalerweise verwenden (GMT, bzw. UTC). Wenn wir die Tweets des Accounts *@realDonaldTrump* untersuchen, ist es jedoch sinnvoll, die Zeitangaben in der Zeitzone des Besitzers zu beschreiben, um die Zeitverschiebung zu berücksichtigen.
+
+```{r}
+# prev <- Sys.getlocale("LC_TIME") # falls abweichend von "German_Germany.1252"
+german <- "German_Germany.1252"
+Sys.setlocale("LC_TIME", "C") # auf windows system muss zunächst die locale angepasst werden
+
+POSIX_times_formatted <- strptime(tweets$created_at, "%a %b %d %H:%M:%S %z %Y")
+
+# Trumpian time
+tweets$created_at <- with_tz(as.POSIXct(POSIX_times_formatted), "EST")
+
+Sys.setlocale("LC_TIME", german)
+```
+
+```{r}
+summary(tweets)
+```
+
+Ein großer Teil der Analysen zielen darauf ab, die Source des Tweets zu unterscheiden. Es wird häufig behauptet, dass Unterschiede im Posting-Verhalten zwischen Posts von einem iPhone und Android Device festgestellt werden können. Diese Analyse soll bestätigen, dass dem so ist. Man weiß, dass Donald Trump zumindest eine Zeit lang ein Android Device verwendete (https://www.theverge.com/2015/10/5/9453935/donald-trump-twitter-strategy). Dieser Zeitraum kann festgestellt werden:
+
+```{r}
+unique(tweets$source)
+```
+
+```{r}
+min(tweets[tweets$source == "Twitter for Android",]$created_at)
+max(tweets[tweets$source == "Twitter for Android",]$created_at)
+```
+
+Für den Twitter-Account *@realDonaldTrump* wurde im Zeitraum Februar 2013 bis März 2017 unter anderem ein Android Device verwendet. Das gesamte Dataset wird auf diesen Zeitraum eingeschränkt, um sicherszustellen, dass in die Analysen keine Tweets einfließen, zu dessen Zeitpunkt das Android Device nicht existierte. Datei wird von vollen Jahren ausgegangen, also 01.01.2014 bis 31.12.2016. Außerdem wird auf Android und iPhone Devices eingeschränkt. Zusätzlich wird das Dataset weiter "gesäubert":
+
+```{r}
+names(tweets) <- c("device", "text", "created", "retweet_count", "favorite_count", "is_retweet", "id")
+names(tweets)
+```
+
+```{r}
+tweets <- tweets %>%
+  mutate(device = str_replace(device, "Twitter for ", "")) %>%
+  filter(device %in% c("Android", "iPhone") &
+           created >= "2014-01-01" &
+           created <= "2016-12-31") %>%
+  select(id, device, created, text)
+
+tweets$device <- as.factor(tweets$device)
+tweets[1:5,]
+```
+
+## Exploration
+
+Eine Betrachtung der *Absolut*-Zahlen / Zählungen der Posts je Device:
+
+```{r}
+tweets %>%
+  count(device) %>%
+  mutate(percent = n/sum(n))
+```
+Das Android Device wird wesentlich reger verwendet. Ein Hinweis darauf, dass wir in den folgenden Analysen, wo sinnvoll, relative Werte verwenden sollten, um somit dem Klassifizierungs-Überhang (engl. Prevalence) der Klasse *'Android'* entgegenzuwirken.
+
+---
+
+Wann Postet der Twitter Account *@realDonaldTrump* ? Die Zeiten wurden hierfür bereits in die richtige Form gebracht (s.o.), denn hier ist vor allem die Zeitzone zu beachten.
+
+```{r fig.height=6, fig.width=9}
+tweets %>%
+  mutate(hour = hour(created)) %>%
+  count(device, hour) %>%
+  group_by(device) %>%
+  mutate(percent = n / sum(n)) %>%
+  ungroup() %>%
+  ggplot(aes(hour, percent, color = device)) +
+  geom_line(size = 1.1) +
+  scale_y_continuous(labels = percent_format()) +
+  theme(legend.position = 'bottom') +
+  labs(title = "Anteilige Tweets pro Uhrzeit u. Device",
+       x = "Tageszeit (EST)",
+       y = "% Tweets p. Device",
+       color = "")
+```
+
+---
+
+Über den Account *@realDonaldTrump* werden Tweets anderer User retweetet. Ein Tweet wird als Retweet eingeordnet, wenn er mit doppelten Anführungszeichen (*"*) beginnt. Andere Twitter User machten die Beobachtung, dass *@realDonaldTrump* diese besondere Angewohnheit für das Retweeten hat (statt die dafür eigentlich vorgesehene Funktion oder den gängigen Kürzel '*RT*' zu verwenden). Die folgende Grafik zeigt, auf welche Devices sich diese Retweets verteilen:
+
+```{r}
+tweets %>%
+  count(device, quoted = ifelse(str_detect(text, '^"'), "RT", "nicht-RT")) %>%
+  ggplot(aes(device, n, fill = quoted)) +
+  geom_bar(stat = "identity", position = "dodge") +
+  labs(title = 'Analyse der Tweet Texte\n"-Zeichen zu Beginn',
+       x = "",
+       y = "Anzahl Tweets",
+       fill = "")
+```
+
+Es ist erkennbar, dass die meisten Retweets tatsächlich vom Android Device stammen. Das unterstützt weiterhin die Hypthese, dass ein Unterschied zwischen den
+
+---
+
+Ein weiterer Unterschied, der anhand der Daten belegt werden kann ist folgender: Vom Android Device wird selten bis nie ein Link oder ein Bild gepostet. Der Präsident scheint dazu zu tendieren, Tweets wie die folgenden zu schreiben:
+
+```{r}
+tweets %>% filter(str_detect(text, "Very dishonest!")) %>% .$text
+```
+
+Während *The Ghost* via iPhone bisweilen Ankündigungen, Danksagungen oder sonstige Grüße ausspricht:
+```{r}
+tweets %>% filter(str_detect(text, "Thank you W")) %>% .$text
+```
+
+Diese Tweets sind zudem in einem ähnlichen Muster geschrieben, als diene eine interne Vorgabe als Vorlage. Zudem ist der Anteil an Hashtags (#) wesentlich höher als in den Tweets des Präsidenten, was weiter unten noch untermauert wird. Hier zunächst die Darstellung der Zählungen der Tweets mit und ohne Links/Bildern:
+
+```{r}
+#  Anzahl der Tweets mit und ohne Bild-Link pro Device bestimmen
+tweets_pictures <- tweets %>%
+  filter(!str_detect(text, '^"')) %>%
+  mutate(picture = ifelse(
+    str_detect(text, "t.co"),
+    "Bild-Link",
+    "nicht Bild-Link")) %>%
+  count(device, picture)
+
+# bar plot
+ggplot(tweets_pictures, aes(device, n, fill = picture)) +
+  geom_col(position = position_dodge()) +
+  labs(title = "Analyse nach Bildern in Tweets pro Device",
+       x = "",
+       y = "Anzahl Tweets",
+       fill = "")
+```
+
+---
+
+Der Unterschied zwischen den beiden Devices ist hinreichend nachgestellt worden. Nun wird der Inhalt der Tweets betrachtet, um somit einer Aussage näher zu kommen, ob der Präsident einen oder mehrere *Ghosts* für seinen Twitter Account beschäftigt, so lautet schließlich die Hypothese.
+
+Für diese Analyse werden die Tweets im strengen *Tidy*-Format benötigt. Dazu wird wie zuvor beschrieben die Funktion `unnest_token` verwendet. Es erfolgen weitere Schritte:
+
+* Die Bild-Links werden mit `str_replace_all` entfernt (das regex lautet `"https://t.co/[A-Za-z\\d]+|&amp;"`).
+* Es werden außerdem mittels des DataFrames `stop_words` aus dem `tidytext` Package Wörter ohne relevante Aussagekraft aus dem Analyse-Dataset entfernt.
+* Für `unnest_tokens` wird ein benutzerdefiniertes Muster verwendet: `([^A-Za-z\\d#@']|'(?![A-Za-z\\d#@]))`, welches in der Lage ist Erwähnungen anderer Nutzer (@...) und Hashtag-Nennungen (#...) zu erhalten. Die *default*-Werte der Funktion würden Sonderzeichen wie diese entfernen.
+* Vorrangig Ziffern werden mit `str_detect(word, "[a-z]")` herausgefiltert.
+
+```{r}
+tweets_tidy <- tweets %>%
+  filter(!str_detect(text, '^"')) %>%
+  mutate(text = str_replace_all(text, "https://t.co/[A-Za-z\\d]+|&amp;", "")) %>%
+  unnest_tokens(word, text, token = "regex", pattern = "([^A-Za-z\\d#@']|'(?![A-Za-z\\d#@]))") %>%
+  filter(!word %in% stop_words$word,
+         str_detect(word, "[a-z]"))
+
+tweets_tidy[1:5,]
+```
+
+Nun können die häufigsten Wörter ausgegeben werden:
+
+```{r}
+tweets_tidy %>%
+  count(word, sort = T) %>%
+  top_n(15, n) %>%
+  mutate(word = reorder(word, n)) %>%
+  ggplot(aes(word, n)) +
+  geom_col() +
+  coord_flip() +
+  ggtitle("Die häufigsten Wörter insgesamt")
+```
+
+---
+
+Möchte man nun die Verwendung von Worten je Device betrachten, kann man sich das Quotenverhältnis zur Hilfe nehmen. Dies ist die bessere Variante als ein schlichter Vergleich der Zählungen, weil wie zuvor beschrieben somit der Überhang der Klassifizierung *'Android'* beachtet wird.
+
+$$
+\log_2(\frac{\frac{}{}}{ss})
+$$
+
+## Sentiment-Analyse
+
+## Topic Modeling
+
+
 
 https://dzone.com/articles/text-analysis-of-trumps-tweets-confirms-he-writes
 
