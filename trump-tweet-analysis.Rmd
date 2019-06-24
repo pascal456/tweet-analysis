@@ -469,16 +469,163 @@ ggplot(tweets_sentiments, aes(word, oddratio, fill = oddratio < 0)) +
 
 ---
 
+Der Tidying-Ansatz von den Analysen war der Referenz von [David Robinson](http://varianceexplained.org/r/trump-tweets/) entnommen. Das `tidytext` package bietet jedoch mit der Option `token = "tweets"` für die `unnest_tokens`-Funktion einen alternativen *Tidying*-Ansatz, der im Folgenden angewendet wird:
 ```{r}
-tweets %>%
-  filter(device == "Android") %>%
+# 'tweets_tidy_sa' steht für 'Tweets tidy für Sentiment Analyse'
+tweets_tidy_sa <- tweets %>%
+  filter(!str_detect(text, '^"'),
+         !str_detect(text, '^RT')) %>%
   unnest_tokens(output = word, input = text, token = "tweets")
+
+tweets_tidy_sa
 ```
+
+
+```{r}
+tweets_tidy_sa %>%
+  filter(device == "Android") %>%
+  inner_join(get_sentiments("bing"), by = "word") %>%
+  count(sentiment) %>%
+  ggplot(aes(sentiment, n, fill = sentiment)) +
+  geom_col() +
+  theme(legend.position = 'bottom') +
+  labs(title = 'Tweets mit "Bing"-Sentimenten, gesamt',
+       x = "",
+       y = "Anzahl Wörter",
+       fill = "")
+```
+
+```{r}
+tweets_tidy_sa %>%
+  inner_join(get_sentiments("bing"), by = "word") %>%
+  count(device, sentiment) %>%
+  ggplot(aes(device, n, fill = sentiment)) +
+  geom_col(position = position_dodge()) +
+  theme(legend.position = 'bottom') +
+  labs(title = 'Tweets mit "Bing"-Sentimenten, gesamt pro Device',
+       x = "",
+       y = "Anzahl Wörter",
+       fill = "")
+```
+
+Laut *"Bing"*-Sentimenten sind die Tweets vom Android Device und damit diejenigen vom Präsidenten selbst wesentlich negativer als die Tweets vom iPhone. Das bezieht sich auf den gesamten Zeitraum.
+
+Die Analyse mit *NRC*-Sentimenten zusätzlich mit Satistik untermalt werden: Weil es sich hier um Zählungen handelt, ist ein *Poisson-Test* anwendbar.
+
+```{r}
+tweets_tidy_sa %>%
+  inner_join(nrc, by = "word")
+```
+
+Referenz: https://dzone.com/articles/text-analysis-of-trumps-tweets-confirms-he-writes
+
+---
+
+Eine Betrachtung des zeitlichen Verlaufs ist ebenfalls möglich:
+```{r}
+
+```
+
 
 
 ## Topic Modeling
 
+Zunächst muss aus dem tidy Dataset eine *Document-Term-Matrix* erstellt werden:
 
-https://dzone.com/articles/text-analysis-of-trumps-tweets-confirms-he-writes
+```{r}
+tweets_dtm <- tweets_tidy_sa %>%
+  filter(!word %in% stop_words$word,
+         str_detect(word, "[a-z]")) %>%
+  count(id, word) %>%
+  cast_dtm(id, word, n)
+
+tweets_dtm
+```
+
+Wie in den Grundlagen beschrieben, resultiert eine sehr dünn besetzte Matrix.
+
+Daraufhin kann die **Latent Dirichlet allocation** durchgeführt werden. Die Methode wird zunächst näher spezifiziert, was im Default "quick approximation", also *Schnelle Schätzung* resultiert.
+```{r}
+tweets_lda <- LDA(tweets_dtm, k = 2, control = list(seed = 1234))
+tweets_lda
+```
+
+Die Auftrittswahrscheinlichkeiten $\beta$ pro Wort können dann wie bereits beschrieben mit der `tidy`-Funktion extrahiert werden:
+
+```{r}
+tweets_topics <- tidy(tweets_lda, matrix = "beta")
+tweets_topics
+```
+
+Für die Interpretation werden die Ergebnisse weiterverarbeitet. Es werden die Wörter mit den $n$ = 7 höchsten Auftrittswahrscheinlichkeiten $\beta$ ausgewählt.
+```{r}
+tweets_topics_top_terms <- tweets_topics %>%
+  group_by(topic) %>%
+  top_n(7, beta) %>%
+  ungroup() %>%
+  arrange(topic, -beta)
+
+tweets_topics_top_terms
+```
+
+```{r}
+tweets_topics_top_terms %>%
+  mutate(term = reorder(term, beta)) %>%
+  ggplot(aes(term, beta, fill = as.factor(topic))) +
+  geom_col(show.legend = FALSE) +
+  facet_wrap(~ topic, scales = "free") +
+  coord_flip()
+```
+
+Die zwei Themen, die durch *LDA* erfasst wurden, unterscheiden sich zwar, liefern aber keine nennenswerten Erkenntnisse. Das Verfahren wird mit der *"Gibbs"* Methode wiederholt:
+```{r}
+tweets_lda <- LDA(tweets_dtm, k = 2, method = "Gibbs", control = list(seed = 1234))
+
+tweets_topics <- tidy(tweets_lda, matrix = "beta")
+
+tweets_topics_top_terms <- tweets_topics %>%
+  group_by(topic) %>%
+  top_n(7, beta) %>%
+  ungroup() %>%
+  arrange(topic, -beta)
+
+tweets_topics_top_terms %>%
+  mutate(term = reorder(term, beta)) %>%
+  ggplot(aes(term, beta, fill = as.factor(topic))) +
+  geom_col(show.legend = FALSE) +
+  facet_wrap(~ topic, scales = "free") +
+  coord_flip()
+```
+
+Nun spiegelt das Ergebnis sinngemäß den Unterschied zwischen den Devices wider. Thema 1 könnte hier nach "Android", Thema 2 nach "iPhone" benannt werden.
+
+Die Methode wird wiederum wiederholt. Dieses Mal mit $n$ = 6 Themen.
+
+```{r}
+tweets_lda <- LDA(tweets_dtm, k = 6, method = "Gibbs", control = list(seed = 1234))
+
+tweets_topics <- tidy(tweets_lda, matrix = "beta")
+
+tweets_topics_top_terms <- tweets_topics %>%
+  group_by(topic) %>%
+  top_n(7, beta) %>%
+  ungroup() %>%
+  arrange(topic, -beta)
+
+tweets_topics_top_terms %>%
+  mutate(term = reorder(term, beta)) %>%
+  ggplot(aes(term, beta, fill = as.factor(topic))) +
+  geom_col(show.legend = FALSE) +
+  facet_wrap(~ topic, scales = "free") +
+  coord_flip()
+```
+
+
+```{r}
+tweets %>%
+  filter(str_detect(text, "amp")) %>%
+  head()
+```
+
 
 # Zusammenfassung der Ergebnisse
