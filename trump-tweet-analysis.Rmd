@@ -146,9 +146,14 @@ Der nachfolgende Code-Chunk lädt die benötigten Packages und die Textdaten von
 if(!require('tidyverse')){
   install.packages('tidyverse')}; library('tidyverse')
 
-
 if(!require('tidytext')){
   install.packages('tidytext')}; library('tidytext')
+
+if(!require('textdata')){
+  install.packages('textdata')}; library('textdata')
+
+if(!require('syuzhet')){
+  install.packages('syuzhet')}; library('syuzhet')
 
 if(!require('lubridate')){
   install.packages('lubridate')}; library('lubridate')
@@ -350,13 +355,88 @@ tweets_tidy %>%
 
 ---
 
-Möchte man nun die Verwendung von Worten je Device betrachten, kann man sich das Quotenverhältnis zur Hilfe nehmen. Dies ist die bessere Variante als ein schlichter Vergleich der Zählungen, weil wie zuvor beschrieben somit der Überhang der Klassifizierung *'Android'* beachtet wird.
+Möchte man nun die Verwendung von Worten je Device betrachten, kann man sich das *Quotenverhältnis* zur Hilfe nehmen. Dies ist die bessere Variante als ein schlichter Vergleich der Zählungen, weil wie zuvor beschrieben somit der Überhang der Klassifizierung *'Android'* beachtet wird. David Robinson aus der Data Science Community dient als Referenz für die nachfolgende Statistik. Das Log-Quotenverhältnis (auch *Odd-Ratio*) berechnet sich wie folgt:
 
 $$
-\log_2(\frac{\frac{}{}}{ss})
+\log_2
+\left(
+  \frac
+    {\frac{\text{# von Android}+1}{\text{Gesamt # Wörter Android}+1}}
+    {\frac{\text{# von iPhone}+1}{\text{Gesamt # Wörter iPhone}+1}}
+\right)
 $$
+
+Die Wörter werden für die Analyse auf ein Vorkommen von mindestens fünf Mal auf beiden Devices eingeschränkt. In einigen Fällen bedeutet das, dass weniger Vorkommen von dem Android Device als vom iPhone gezählt werden, jedoch nie weniger als fünf insgesamt. Wenn ein Wort auf dem Android einmalig auftritt, dann fallen die restlichen vier dem iPhone Device zu.
+
+```{r}
+tweets_ratios <- tweets_tidy %>%
+  count(word, device) %>%
+  group_by(word)  %>% 
+  filter(sum(n) >= 5) %>%
+  spread(device, n, fill = 0) %>%
+  ungroup() %>%
+  mutate_if(is.numeric, list(~ (. + 1) / sum(. + 1))) %>%
+  mutate(oddratio = log2(Android / iPhone)) %>%
+  arrange(desc(oddratio))
+
+tweets_ratios[1:5,]
+```
+
+Im Anschluss können die meist verwendeten Wörter, geordnet nach den *Odd-Ratios*, geplottet werden. Eine explizite Unterscheidung der Device-Klassen ist nun nicht mehr möglich, weil die Raten über die Klassen hinweg erstellt wurden. Jedoch wurde die Berechnung so ausgelegt, dass die Quotenverhältnisse aus Sicht der Klasse *'Android'* definiert sind. Somit können Werte größer als Null dem Android Device und Werte kleiner Null iPhone zugeordnet werden:
+
+```{r}
+tweets_ratios %>%
+  group_by(oddratio > 0) %>%
+  top_n(15, abs(oddratio)) %>%
+  ungroup() %>%
+  mutate(word = reorder(word, oddratio)) %>%
+  ggplot(aes(word, oddratio, fill = oddratio < 0)) +
+  geom_bar(stat = "identity") +
+  coord_flip() +
+  ylab("Android / iPhone Log-Odd-Ratio") +
+  scale_fill_manual(name = "", labels = c("Android", "iPhone"),
+                    values = c("red", "lightblue"))
+```
+
+Bis hierhin lassen sich die ersten Erkenntnisse der Explorativen Analyse zusammenfassen:
+
+* Es ist tatsächlich so, dass die meisten Hashtag-Markierungen vom iPhone stammen. Wenn der Präsident Hashtags verwendet, sind das allenfalls Hashtags aus Retweets.
+* Das iPhone ist für offizielle Ankündigungen im Stil von Einladungen verantwortlich. Das Erkennt man an Wortfragmenten wie *"7pm"* oder *"join"* (*"Join me in Houston, Texas tomorrow night at 7 pm!"*)
+* Emotionalere Tweets stammen vom Präsidenten selbst. Worte wie "poorly" oder "stupid" sind nicht nur Worte, die untypisch für eine Campagne oder eine offizielle Stelle sind, sie sind auch eindeutig dem Android und demnach dem Präsidenten zuzuordnen, wenn man die Hypthese zu unterstützen versucht.
 
 ## Sentiment-Analyse
+
+Für den erstem Teil der Sentimentanalyse werden die Ergebnisse aus der vorherigen Analyse mit dem "NRC" Sentiment-Lexikon verknüpft. Dieses Sentiment-Lexikon wird hier mit `get_sentiment_dictionary` aus dem `syuzhet` Package geladen, weil es seit der neusten Version von `tidytext` nicht mehr zur Verfügung steht.
+
+Es werden die Sentimente mit den zehn meist verwendeten Wörtern, geordnet nach den absoluten Werten der Quotenverhältnisse, ausgewertet und anschließend visualisiert:
+
+```{r}
+nrc <- get_sentiment_dictionary("nrc") %>%
+  select(word, sentiment)
+
+tweets_sentiments <- tweets_ratios %>%
+  inner_join(nrc, by = "word") %>%
+  filter(!sentiment %in% c("positive", "negative")) %>%
+  mutate(sentiment = reorder(sentiment, -oddratio),
+         word = reorder(word, -oddratio)) %>%
+  group_by(sentiment) %>%
+  top_n(10, abs(oddratio)) %>%
+  ungroup()
+
+tweets_sentiments[1:5,]
+```
+
+```{r}
+# Plot the log odds ratio of words by device in groups sentiments
+ggplot(tweets_sentiments, aes(word, oddratio, fill = oddratio < 0)) +
+  facet_wrap(~ sentiment, scales = "free", nrow = 2) +
+  geom_col() +
+  theme(axis.text.x = element_text(angle = 90, hjust = 1)) +
+  labs(x = "", y = "Android / iPhone Odd-Ratio") +
+  scale_fill_manual(name = "", labels = c("Android", "iPhone"),
+                    values = c("red", "lightblue"))
+```
+
 
 ## Topic Modeling
 
