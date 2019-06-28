@@ -17,6 +17,35 @@ Für die Dokumentation des Projekts wird eine R-Markdown Datei gewählt, weil si
 
 Der nachfolgende Code-Chunk lädt die benötigten Packages und die Textdaten von Twitter.
 
+```{r results=FALSE}
+if(!require('tidyverse')){
+  install.packages('tidyverse')}; library('tidyverse')
+
+if(!require('tidytext')){
+  install.packages('tidytext')}; library('tidytext')
+
+if(!require('textdata')){
+  install.packages('textdata')}; library('textdata')
+
+if(!require('syuzhet')){
+  install.packages('syuzhet')}; library('syuzhet')
+
+if(!require('lubridate')){
+  install.packages('lubridate')}; library('lubridate')
+
+if(!require('topicmodels')){
+  install.packages('topicmodels')}; library('topicmodels')
+
+if(!require('jsonlite')){
+  install.packages('jsonlite')}; library('jsonlite')
+
+if(!require('scales')){
+  install.packages('scales')}; library('scales')
+
+tweets <- as.tbl( fromJSON('src/tweets-2019-06-22.json') )
+```
+
+
 # Einleitung: Text-Mining am Beispiel der Twitter Posts von Donald Trump
 
 Fragestellung / Problemstellung
@@ -74,6 +103,13 @@ Eine Möglichkeit, das Stimmungsbild eines Textes zu analysieren, besteht darin,
 
 ### Sentiment-Lexika
 
+Die Sentiment-Lexika enthalten Bewertungen oder *Scores* einzelner, ausgewählter Wörter. Sie spiegeln die Emotionen oder repräsentierte Meinungen wider, die sich als Information in Textdaten wiederfinden. Sie sind im `tidytext`-Package frei verfügbar. Das *nrc*-Lexikon wird mittlerweile nicht mehr unterstützt. Sentiment-Lexika verfolgen verschiedene Ansätze:
+
+* **BING**: binär (positive, negative)
+* **LOUGHRAN** oder **NRC**: Emotionen / nominal (Bsp. anger, fear, happiness, sadness, trust)
+* **AFINN**: Score (Intervalle, Bsp. $[-5, 5]$)
+
+
 ```{r}
 get_sentiments("bing")
 ```
@@ -82,9 +118,20 @@ get_sentiments("bing")
 get_sentiments("afinn")
 ```
 
+```{r}
+get_sentiments("loughran")
+```
+
+
 ### *Inner Join* mit Lexika
 
 That‘s it! Nach den Methoden der „Tidy Data“- Prinzipien wird durch einen relativ einfachen „Join“ (`inner_join`) die Sentimentanalyse implementiert. Auf diese Weise werden aus der Originalquelle nur diejenigen Wörter erhalten, die in beiden Quellen, dem Text und dem Sentiment-Lexikon, enthalten sind.
+
+```{r eval=FALSE}
+data %>%
+  inner
+```
+
 
 Theoretisch könnte man an dieser Stelle stoppen. Das Interessante ist nachfolgend, wie man aus den Verknüpfungen zw. Token und Sentimenten Wissen generieren kann.
 
@@ -147,36 +194,6 @@ Die Implementation und das Ergebnis einer *Latent Dirichlet Allocation* wird im 
 Referenz: https://www.tidytextmining.com/topicmodeling.html
 
 # Dokumentation der Durchführung der Textanalyse
-
-Der nachfolgende Code-Chunk lädt die benötigten Packages und die Textdaten von Twitter.
-
-```{r results=FALSE}
-if(!require('tidyverse')){
-  install.packages('tidyverse')}; library('tidyverse')
-
-if(!require('tidytext')){
-  install.packages('tidytext')}; library('tidytext')
-
-if(!require('textdata')){
-  install.packages('textdata')}; library('textdata')
-
-if(!require('syuzhet')){
-  install.packages('syuzhet')}; library('syuzhet')
-
-if(!require('lubridate')){
-  install.packages('lubridate')}; library('lubridate')
-
-if(!require('topicmodels')){
-  install.packages('topicmodels')}; library('topicmodels')
-
-if(!require('jsonlite')){
-  install.packages('jsonlite')}; library('jsonlite')
-
-if(!require('scales')){
-  install.packages('scales')}; library('scales')
-
-tweets <- as.tbl( fromJSON('src/tweets-2019-06-22.json') )
-```
 
 ## Beschreibung der Daten
 
@@ -274,6 +291,23 @@ tweets %>%
        y = "% Tweets p. Device",
        color = "")
 ```
+
+Darstellung als Boxplots:
+```{r fig.height=7, fig.width=8}
+tweets %>%
+  mutate(minute = minute(created),
+         hour = hour(created)) %>%
+  count(hour, minute, device) %>%
+  ggplot(aes(as.factor(hour), n, fill = device)) +
+  geom_boxplot() +
+  geom_jitter(width = 0.1, alpha = 0.1) +
+  theme(legend.position = 'bottom') +
+  labs(title = "Anteilige Tweets pro Uhrzeit u. Device",
+       x = "Tageszeit (EST)",
+       y = "Anzahl Teets p. Minute",
+       color = "")
+```
+
 
 ### Retweets
 
@@ -476,6 +510,8 @@ Bis hierhin lassen sich die ersten Erkenntnisse der Explorativen Analyse zusamme
 
 Für den erstem Teil der Sentimentanalyse werden die Ergebnisse aus der vorherigen Analyse mit dem "NRC" Sentiment-Lexikon verknüpft. Dieses Sentiment-Lexikon wird hier mit `get_sentiment_dictionary` aus dem `syuzhet` Package geladen, weil es seit der neusten Version von `tidytext` nicht mehr zur Verfügung steht.
 
+### *NRC*-Lexikon
+
 Im Sentiment-Lexikon *'NRC'* sind zehn Sentimente verfügbar:
 ```{r}
 get_sentiment_dictionary("nrc") %>%
@@ -513,6 +549,8 @@ ggplot(tweets_sentiments, aes(word, oddratio, fill = oddratio < 0)) +
                     values = c("red", "lightblue"))
 ```
 
+Diese Darstellung bestätigt, dass die Wörter mit negativem Sentiment in den Tweets von *@realDonaldTrump* deutlich häufiger dem Android zuzuordnen sind. 
+
 ---
 
 Der Tidying-Ansatz von den Analysen war der Referenz von [David Robinson](http://varianceexplained.org/r/trump-tweets/) entnommen. Das `tidytext` package bietet jedoch mit der Option `token = "tweets"` für die `unnest_tokens`-Funktion einen alternativen *Tidying*-Ansatz, der im Folgenden angewendet wird:
@@ -526,6 +564,7 @@ tweets_tidy_sa <- tweets %>%
 tweets_tidy_sa
 ```
 
+### *BING*-Lexikon
 
 ```{r}
 tweets_tidy_sa %>%
@@ -556,6 +595,8 @@ tweets_tidy_sa %>%
 
 Laut *"Bing"*-Sentimenten sind die Tweets vom Android Device und damit diejenigen vom Präsidenten selbst wesentlich negativer als die Tweets vom iPhone. Das bezieht sich auf den gesamten Zeitraum.
 
+### Sentiment Time Series
+
 Die Analyse mit *NRC*-Sentimenten zusätzlich mit Satistik untermalt werden: Weil es sich hier um Zählungen handelt, ist ein *Poisson-Test* anwendbar.
 
 ```{r}
@@ -583,16 +624,10 @@ tweets_tidy_sa %>%
 
 Referenz: https://dzone.com/articles/text-analysis-of-trumps-tweets-confirms-he-writes
 
----
-
-Eine Betrachtung des zeitlichen Verlaufs ist ebenfalls möglich:
-```{r}
-
-```
-
-
 
 ## Topic Modeling
+
+### Erstellen der Document-Term-Matrix
 
 Zunächst muss aus dem tidy Dataset eine *Document-Term-Matrix* erstellt werden:
 
@@ -611,6 +646,8 @@ as.matrix(tweets_dtm)[1:4,1:6]
 ```
 
 Wie in den Grundlagen beschrieben, resultiert eine sehr dünn besetzte Matrix.
+
+### Trainieren des LDA-Modells
 
 Daraufhin kann die **Latent Dirichlet allocation** durchgeführt werden. Die Methode wird zunächst näher spezifiziert, was im Default "quick approximation", also *Schnelle Schätzung* resultiert.
 ```{r}
@@ -708,3 +745,42 @@ tweets %>%
 Es scheint so, dass "amp" zu einem HTML-Fragment gehört. Beim Tidying-Prozess wurde `&amp;` zu "amp" geändert, was letztlich als ein "&" übersetzt werden kann. Die vorhergehende Analyse kann also weiter optimiert werden, indem das zugrunde liegende Tidy-DataFrame angepasst wird. Die korrekte Stelle dafür wäre ein negierter Filter auf die *Term-Matrix* (z.B. ).
 
 # Zusammenfassung der Ergebnisse
+
+Die zuvor schon von anderen Usern der Data Science Community (und vor allem durch Todd Vaziri) aufgestellte Hypothese, US Präsident Donald Trump sei nicht alleiniger Autor des Twitter Accounts *@realDonaldTrump* konnte bestätigt werden. Die Tweets des Präsidenten können im Zeitraum vom Februar 2013 bis März 2017 anhand des Devices in Cluster eingeteilt werden. Diese Erkenntnis ist nicht neu, jedoch für die Glaubwürdigkeit der nachfolgenden Ergebnisse wichtig, denn sie werden somit untermauert.
+
+Bei der Sentimentanalyse fiel schnell auf, dass die einzelnen Methoden nicht direkt trennscharf sind. Die Interpretation, die selbstredend den wesentlichen Teil der Ergebnisse ausmacht, ist letztlich ein subjektiver Vorgang. Der Autor schließt sich aufgrund der Ergebnisse aus den Analysemethoden der Meinung vieler anderer aus der Data Science Community an:  
+Die wesentlich negativeren Tweets werden von einem Android Device geschrieben. Donald Jr. Trump nutzte [laut Bericht des Verge](https://www.theverge.com/2015/10/5/9453935/donald-trump-twitter-strategy) ein solches Device im Untersuchungszeitraum. Daher ist anzunehmen, dass Trump selbst derjenige ist, der die Polarität der Posts in die negative Richtung vorantreibt. Es wurde zusätzlich klar, dass für die Sentimentanalyse ein gewissen Domänenwissen erforderlich ist. Einige Begriffe können mitunter nur dann korrekt eingeordnet werden, wenn man um die Umstände der US Politik gewiss ist. Letztlich bleibt die Sentimentanalyse stark abhängig von manuellen Prozessen. Viele Daten müssen zunächst per Grafiken analysiert werden. Wenn gewisse Inhalte Aufmerksamkeit erregen, können diese dann durch wiederum andere Grafiken aus einem anderen Blickwinkel betrachtet werden (bspw. hinzunehmen oder auch reduzieren von Dimensionen). Einzelne Störfaktoren fallen gar erst mit fortschreitenden Analysen ins Gewicht. Ein Beispiel dafür ist der führende Term "*RT*" bei den Tweet von *@realDonaldTrump*. Selbst wenn diese von einem Android Device geschickt wurden, ist davon auszugehen, dass sie nicht repräsentativ für Trumps Schriftbild oder Sentiment sind, denn *RT* steht für *Retweet* und ist somit wahrscheinlich der Wortlaut anderer Twitter Nutzer. Bereinigt man die die das Dataset von diesen Tweets noch vor dem *Tokenizing*, liefern die Analysen gänzlich andere Ergebnisse.
+
+Für das Topic Modeling war eines der Ziele, eine geeignete Methode zu finden, die Themen in der Praxis errechnen automatisiert kann. Mit LDA wurde ein Ansatz aus dem Bereich des Maschinellen Lernens herausgesucht und angewendet. Die Ergebnisse können als sinngebend betrachtet werden. Es können den einzelnen Clustern tatsächlich Themenüberschriften, bzw. Beschreibungen zugeordnet werden, sie sind jedoch relativ subjektiv formuliert und zugeordnet. Das dafür benötigte Domänenwissen ist höher als bei der Sentimentanalyse einzustufen. Für die Analyse wurde zunächst Topic Modeling mit $k=2$ und anschließen $k=6$ durchgeführt. Für weitere Analysen sind andere Einstellungen für den Tuning-Parameter $k$ denkbar.
+
+**Ausblick:** Die Analysen können also noch weiterverfolgt werden. In Hinsicht auf die hohe Anzahl der Tweets und dem relativ hohen Zeitraum, ist es durchaus möglich, dass eine wesentlich höherer Parameter für $k$ noch sinnvolle Ergebnisse liefern kann.
+
+# Appendix
+
+Alternative Einstellung der Topic Modelling untersuchung.
+
+```{r fig.height=14, fig.width=8}
+tweets_dtm <- tweets_tidy_sa %>%
+  filter(!word %in% c(stop_words$word,"amp"),
+         str_detect(word, "[a-z]")) %>%
+  count(id, word) %>%
+  cast_dtm(id, word, n)
+
+tweets_lda <- LDA(tweets_dtm, k = 20, method = "Gibbs", control = list(seed = 1234))
+
+tweets_topics <- tidy(tweets_lda, matrix = "beta")
+
+tweets_topics_top_terms <- tweets_topics %>%
+  group_by(topic) %>%
+  top_n(7, beta) %>%
+  ungroup() %>%
+  arrange(topic, -beta)
+
+tweets_topics_top_terms %>%
+  mutate(term = reorder(term, beta)) %>%
+  ggplot(aes(term, beta, fill = as.factor(topic))) +
+  geom_col(show.legend = FALSE) +
+  facet_wrap(~ topic, scales = "free", ncol = 2) +
+  coord_flip()
+```
+
