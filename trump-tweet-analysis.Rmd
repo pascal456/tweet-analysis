@@ -48,11 +48,9 @@ tweets <- as.tbl( fromJSON('src/tweets-2019-06-22.json') )
 
 # Einleitung: Text-Mining am Beispiel der Twitter Posts von Donald Trump
 
-Fragestellung / Problemstellung
+Das Thema wurde für die Ausarbeitung, neben anderen Punkten, aufgrund des Unterhaltungswert der Projektauslegung auf der einen Seite und der Möglichkeit neue Methoden kennen zu lernen, gewählt. 
 
-Zielsetzung etc.
-
-zweiter schwerpunkt: [Topic modeling - Themenanalyse]
+Es soll die Hypothese von Todd Vaziri bestätigt werden. Es gibt dazu bereits zahlreiche Untersuchungen, jedoch wird es in dieser Ausarbeitung mit einigen neuen Akzenten nachvollzogen. Die Analyse wird dabei strukturiert anhand des *Tidy-Data*-Prinzips und zugehörigem Prozess durchgeführt. Sie soll helfen, die Frage nach der Erkennbarkeit der Stimmungslage (Sentiment) in einzelnen Tweets und über die Zeit zu beantworten. Zudem wird nach einer geeigneten Methode für das automatische Erkennen von Themen innerhalb von Texten gesucht.
 
 Die Ausarbeitung legt ihren Schwerpunkt auf die Analyse der Themen mit denen sich der Twitter account *@realDonaldTrump* befasst, also [Topic modeling - Themenanalyse]. Daher wird dieses Kapitel etwas ausführlicher ausgelegt. Somit soll die intensive Auseinandersetzung mit der verwendeten Methode sichergestellt werden.
 
